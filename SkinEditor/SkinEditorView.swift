@@ -1,4 +1,5 @@
 import SwiftUI
+import UniformTypeIdentifiers
 
 public struct SkinEditorView: View {
     @StateObject private var model = SkinEditorModel()
@@ -41,33 +42,24 @@ private struct SkinCanvasView: View {
                 .accessibilityLabel("Choose color")
             }
             .padding(.horizontal)
-
             HStack {
-                Button { model.undo() } label: { Image(systemName: "arrow.uturn.backward") }
-                    .disabled(!model.canUndo)
+                Button { model.undo() } label: { Image(systemName: "arrow.uturn.backward") }.disabled(!model.canUndo)
                 Slider(value: $model.brushSize, in: 1...8, step: 1)
                 Text("\(Int(model.brushSize)) px").monospacedDigit()
-                Button { model.redo() } label: { Image(systemName: "arrow.uturn.forward") }
-                    .disabled(!model.canRedo)
+                Button { model.redo() } label: { Image(systemName: "arrow.uturn.forward") }.disabled(!model.canRedo)
             }
             .padding(.horizontal)
-
             SkinGrid(model: model)
                 .padding()
                 .background(Color.secondary.opacity(0.12))
                 .clipShape(RoundedRectangle(cornerRadius: 12))
                 .padding(.horizontal)
-
-            Text("64 × 64 PNG • Minecraft Java skin format")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+            Text("64 × 64 PNG • Minecraft Java skin format").font(.caption).foregroundStyle(.secondary)
         }
         .sheet(isPresented: $showColorPicker) {
             NavigationStack {
                 ColorPicker("Color", selection: Binding(get: { model.color.swiftUIColor }, set: { model.color = PixelColor($0) }))
-                    .padding()
-                    .navigationTitle("Color")
-                    .navigationBarTitleDisplayMode(.inline)
+                    .padding().navigationTitle("Color").navigationBarTitleDisplayMode(.inline)
             }
             .presentationDetents([.medium])
         }
@@ -77,20 +69,16 @@ private struct SkinCanvasView: View {
 private struct SkinGrid: View {
     @ObservedObject var model: SkinEditorModel
     private let side: CGFloat = 320
-
     var body: some View {
         Canvas { context, size in
             let cell = min(size.width, size.height) / 64
-            for y in 0..<64 {
-                for x in 0..<64 {
-                    let rect = CGRect(x: CGFloat(x) * cell, y: CGFloat(y) * cell, width: cell + 0.5, height: cell + 0.5)
-                    context.fill(Path(rect), with: .color(model.pixels[y * 64 + x].swiftUIColor))
-                    if cell >= 5 { context.stroke(Path(rect), with: .color(.black.opacity(0.18)), lineWidth: 0.35) }
-                }
-            }
+            for y in 0..<64 { for x in 0..<64 {
+                let rect = CGRect(x: CGFloat(x) * cell, y: CGFloat(y) * cell, width: cell + 0.5, height: cell + 0.5)
+                context.fill(Path(rect), with: .color(model.pixels[y * 64 + x].swiftUIColor))
+                if cell >= 5 { context.stroke(Path(rect), with: .color(.black.opacity(0.18)), lineWidth: 0.35) }
+            }}
         }
-        .frame(width: side, height: side)
-        .contentShape(Rectangle())
+        .frame(width: side, height: side).contentShape(Rectangle())
         .gesture(DragGesture(minimumDistance: 0).onChanged { value in
             let cell = side / 64
             model.apply(at: Int(value.location.x / cell), y: Int(value.location.y / cell))
@@ -102,16 +90,11 @@ private struct SkinGrid: View {
 private struct SkinPreviewView: View {
     @ObservedObject var model: SkinEditorModel
     var body: some View {
-        ScrollView {
-            VStack(spacing: 16) {
-                Text("Texture Preview").font(.headline)
-                if let image = model.image {
-                    Image(uiImage: image).interpolation(.none).resizable().scaledToFit().padding()
-                }
-                Text("The texture can be exported directly as a 64×64 PNG skin.")
-                    .font(.footnote).foregroundStyle(.secondary)
-            }.padding()
-        }
+        ScrollView { VStack(spacing: 16) {
+            Text("Texture Preview").font(.headline)
+            if let image = model.image { Image(uiImage: image).interpolation(.none).resizable().scaledToFit().padding() }
+            Text("Export the texture directly as a 64×64 PNG skin.").font(.footnote).foregroundStyle(.secondary)
+        }.padding() }
     }
 }
 
@@ -119,7 +102,6 @@ private struct SkinToolsView: View {
     @ObservedObject var model: SkinEditorModel
     @State private var importing = false
     @State private var exporting = false
-
     var body: some View {
         List {
             Section("File") {
@@ -139,7 +121,7 @@ private struct SkinToolsView: View {
     }
 }
 
-private enum SkinTool: CaseIterable { case pencil, eraser
+public enum SkinTool: CaseIterable { case pencil, eraser
     var title: String { self == .pencil ? "Pencil" : "Eraser" }
 }
 
